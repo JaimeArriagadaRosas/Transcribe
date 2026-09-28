@@ -71,7 +71,7 @@ class JobStore:
                 return item
         return None
 
-    def create(self, provider: str, url: str) -> Job:
+    def create(self, provider: str, url: str, transcription_name: str | None = None) -> Job:
         index = self._read_index()
         number = int(index.get("next_number") or 1)
         while any(int(item.get("number", -1)) == number for item in index["jobs"]):
@@ -98,6 +98,7 @@ class JobStore:
                 "vtt": None,
             },
             "transcription": {
+                "name": transcription_name,
                 "model": None,
                 "language": None,
                 "device": None,
@@ -150,10 +151,3 @@ class JobStore:
             job.directory.rename(target)
             job.directory = target
         return job
-
-    def list_jobs(self) -> list[Job]:
-        index = self._read_index()
-        return [self.load(int(item["number"])) for item in sorted(index["jobs"], key=lambda x: int(x["number"]))]
-
-    def reset(self) -> None:
-        self._write_index({"next_number": 1, "jobs": []})

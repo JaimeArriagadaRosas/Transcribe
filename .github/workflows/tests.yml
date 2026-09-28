@@ -19,7 +19,7 @@ jobs:
           python-version: "3.11"
 
       - name: Compile app
-        run: python -m compileall -q app tests/test_jobs.py tests/test_providers.py tests/test_cleanup.py
+        run: python -m compileall -q app tests/test_jobs.py tests/test_providers.py
 
       - name: Run unit tests
-        run: python -m unittest -v tests.test_jobs tests.test_providers tests.test_cleanup
+        run: python -m unittest -v tests.test_jobs tests.test_providers

@@ -21,7 +21,7 @@ TXT + SRT + VTT
 
 ## Menú
 
-El programa presenta tres áreas principales:
+El programa presenta dos fuentes de transcripción y una opción de salida:
 
 ```text
 ========================================
@@ -29,8 +29,7 @@ El programa presenta tres áreas principales:
 ========================================
 1) Zoom
 2) YouTube
-3) Limpiar / administrar archivos
-4) Salir
+3) Salir
 ```
 
 ### Zoom
@@ -104,7 +103,6 @@ app/
 ├── core/
 │   ├── audio.py
 │   ├── browser.py
-│   ├── cleanup.py
 │   ├── jobs.py
 │   ├── pipeline.py
 │   └── transcribe.py
@@ -142,11 +140,13 @@ Cada trabajo contiene:
 ```text
 video.mp4
 audio.mp3
-transcript.txt
-transcript.srt
-transcript.vtt
+<NOMBRE>.txt
+<NOMBRE>.srt
+<NOMBRE>.vtt
 metadata.json
 ```
+
+Después de pegar la URL, MediaTranscribe solicita un nombre para la transcripción. Ese nombre se usa como base para los tres archivos de salida; los caracteres no válidos para nombres de archivo se reemplazan automáticamente.
 
 El archivo global:
 
@@ -157,20 +157,6 @@ data/jobs.json
 mantiene la numeración y permite detectar URLs ya procesadas o reanudar trabajos incompletos.
 
 Si una URL ya fue completada, MediaTranscribe no vuelve a descargarla automáticamente. Si quedó interrumpida o fallida, la siguiente ejecución reanuda el mismo trabajo.
-
-## Limpieza
-
-El menú de limpieza ofrece:
-
-```text
-1) Eliminar solo videos descargados
-2) Limpiar todos los trabajos generados
-3) Volver
-```
-
-**Eliminar solo videos** conserva MP3, transcripciones y metadata.
-
-**Limpiar todos los trabajos** elimina `output/`, `temp/`, `logs/` y el historial de trabajos, y reinicia la numeración en 001. No elimina `config.json`, el entorno virtual ni `private/`.
 
 ## Transcripción
 

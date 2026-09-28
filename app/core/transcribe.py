@@ -14,6 +14,16 @@ class Segment:
     text: str
 
 
+def _safe_output_stem(value: str, fallback: str = "transcript", max_length: int = 80) -> str:
+    value = str(value).strip()
+    value = re.sub(r"(?i)\.(txt|srt|vtt)$", "", value)
+    value = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", value).strip(" .")
+    value = re.sub(r"\s+", " ", value)
+    value = re.sub(r"_+", "_", value)
+    value = value[:max_length].rstrip(" .")
+    return value or fallback
+
+
 def _clock(seconds: float, milliseconds: bool = False, comma: bool = False) -> str:
     total_ms = max(0, round(float(seconds) * 1000))
     hours, rem = divmod(total_ms, 3_600_000)
@@ -86,13 +96,21 @@ def _setup_cuda_path() -> None:
             os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ.get("PATH", "")
 
 
-def transcribe_audio(audio: Path, job_dir: Path, config: dict, logger) -> dict:
-    txt = job_dir / "transcript.txt"
-    srt = job_dir / "transcript.srt"
-    vtt = job_dir / "transcript.vtt"
+def transcribe_audio(
+    audio: Path,
+    job_dir: Path,
+    config: dict,
+    logger,
+    output_name: str = "transcript",
+) -> dict:
+    stem = _safe_output_stem(output_name)
+    txt = job_dir / f"{stem}.txt"
+    srt = job_dir / f"{stem}.srt"
+    vtt = job_dir / f"{stem}.vtt"
     if _valid_outputs(txt, srt, vtt):
         return {
             "txt": txt, "srt": srt, "vtt": vtt,
+            "name": stem,
             "model": str(config.get("whisper_model", "medium")),
             "language": str(config.get("language", "auto")),
             "device": "existing",
@@ -152,6 +170,7 @@ def transcribe_audio(audio: Path, job_dir: Path, config: dict, logger) -> dict:
                 "txt": txt,
                 "srt": srt,
                 "vtt": vtt,
+                "name": stem,
                 "model": model_name,
                 "language": getattr(info, "language", None) or requested_language,
                 "device": device,

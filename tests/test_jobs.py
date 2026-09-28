@@ -16,9 +16,10 @@ class JobStoreTests(unittest.TestCase):
 
     def test_jobs_are_numbered_and_persisted(self):
         store = JobStore(self.root)
-        first = store.create("zoom", "https://example.zoom.us/rec/play/abc")
-        second = store.create("youtube", "https://youtu.be/xyz")
+        first = store.create("zoom", "https://example.zoom.us/rec/play/abc", "Clase redes")
+        second = store.create("youtube", "https://youtu.be/xyz", "Tutorial Python")
         self.assertEqual(first.number, 1)
+        self.assertEqual(first.metadata["transcription"]["name"], "Clase redes")
         self.assertEqual(second.number, 2)
         data = json.loads((self.root / "data" / "jobs.json").read_text(encoding="utf-8"))
         self.assertEqual(data["next_number"], 3)

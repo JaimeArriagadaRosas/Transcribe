@@ -41,7 +41,7 @@ def _relative(job: Job, path: Path) -> str:
     return path.resolve().relative_to(job.directory.resolve()).as_posix()
 
 
-def process_url(root: Path, provider_name: str, url: str) -> Job:
+def process_url(root: Path, provider_name: str, url: str, transcription_name: str) -> Job:
     root = root.resolve()
     config = load_config(root)
     provider = PROVIDERS[provider_name]
@@ -56,8 +56,10 @@ def process_url(root: Path, provider_name: str, url: str) -> Job:
             return existing_job
         print(f"Reanudando trabajo #{existing_job.number:03d}...")
         job = existing_job
+        job.metadata.setdefault("transcription", {})["name"] = transcription_name
+        store.save(job)
     else:
-        job = store.create(provider_name, url)
+        job = store.create(provider_name, url, transcription_name)
 
     logger = setup_logger(root, job.number)
     try:
@@ -91,10 +93,11 @@ def process_url(root: Path, provider_name: str, url: str) -> Job:
         print("[4/5] Transcribiendo...")
         temp_dir = root / "temp" / f"{job.number:03d}"
         flac = ensure_flac(video, temp_dir / "audio.flac")
-        result = transcribe_audio(flac, job.directory, config, logger)
+        result = transcribe_audio(flac, job.directory, config, logger, transcription_name)
         for kind in ("txt", "srt", "vtt"):
             job.metadata["files"][kind] = _relative(job, result[kind])
         job.metadata["transcription"] = {
+            "name": result["name"],
             "model": result["model"],
             "language": result["language"],
             "device": result["device"],

@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from app.core.cleanup import delete_all_generated, delete_downloaded_videos
 from app.core.pipeline import process_url
 
 
@@ -18,40 +17,25 @@ def _read_url(label: str) -> str:
     return value
 
 
+def _read_transcription_name() -> str:
+    while True:
+        value = input("Nombre de la transcripción: ").strip()
+        if value:
+            return value
+        print("El nombre no puede estar vacío.")
+
+
 def _process(provider: str) -> None:
     title = "ZOOM" if provider == "zoom" else "YOUTUBE"
     print(f"\n---------------- {title} ----------------")
     url = _read_url("Pega la URL: ")
+    transcription_name = _read_transcription_name()
     try:
-        process_url(_root(), provider, url)
+        process_url(_root(), provider, url, transcription_name)
     except KeyboardInterrupt:
         print("\nInterrumpido. El trabajo queda guardado para reanudarlo.")
     except Exception as exc:
         print(f"\n[ERROR] {exc}")
-
-
-def _cleanup_menu() -> None:
-    root = _root()
-    while True:
-        print("\n------------- LIMPIEZA -------------")
-        print("1) Eliminar solo videos descargados")
-        print("2) Limpiar todos los trabajos generados")
-        print("3) Volver")
-        choice = input("\nElige una opción (1-3): ").strip()
-        if choice == "1":
-            removed = delete_downloaded_videos(root)
-            print(f"Videos eliminados: {removed}")
-        elif choice == "2":
-            confirmation = input("Escribe LIMPIAR para confirmar: ").strip()
-            if confirmation == "LIMPIAR":
-                delete_all_generated(root)
-                print("Contenido generado eliminado. La numeración vuelve a 001.")
-            else:
-                print("Operación cancelada.")
-        elif choice == "3":
-            return
-        else:
-            print("Opción inválida.")
 
 
 def menu() -> int:
@@ -61,16 +45,13 @@ def menu() -> int:
         print("========================================")
         print("1) Zoom")
         print("2) YouTube")
-        print("3) Limpiar / administrar archivos")
-        print("4) Salir")
-        choice = input("\nSelecciona una opción (1-4): ").strip()
+        print("3) Salir")
+        choice = input("\nSelecciona una opción (1-3): ").strip()
         if choice == "1":
             _process("zoom")
         elif choice == "2":
             _process("youtube")
         elif choice == "3":
-            _cleanup_menu()
-        elif choice == "4":
             return 0
         else:
             print("Opción inválida.")
