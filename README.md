@@ -1,9 +1,15 @@
-# MediaTranscribe
+# Transcribe
 
-MediaTranscribe es una aplicación local para **descargar y transcribir contenido al que el usuario ya tiene acceso**. - **Zoom**: grabaciones públicas o institucionales, con reutilización de sesiones locales autorizadas cuando la grabación requiere autenticación.
-- **YouTube**: videos públicos y, cuando sea necesario, acceso mediante una sesión local autorizada.
+Transcribe es una aplicación local para **descargar y transcribir contenido al que el usuario ya tiene acceso** desde Zoom y YouTube.
 
-Después de descargar, ambos proveedores usan el mismo pipeline:
+- **Zoom:** grabaciones públicas o institucionales, reutilizando sesiones locales autorizadas cuando la grabación requiere autenticación.
+- **YouTube:** videos públicos y, cuando sea necesario, acceso mediante una sesión local autorizada.
+- **Transcripción local:** genera archivos TXT, SRT y VTT con `faster-whisper`.
+- **Reanudación:** conserva el estado de los trabajos para evitar repetir descargas o continuar procesos interrumpidos.
+
+## Flujo de trabajo
+
+Ambos proveedores utilizan el mismo pipeline:
 
 ```text
 URL
@@ -21,18 +27,18 @@ TXT + SRT + VTT
 
 ## Menú
 
-El programa presenta dos fuentes de transcripción y una opción de salida:
-
 ```text
 ========================================
-            MEDIATRANSCRIBE
+               TRANSCRIBE
 ========================================
 1) Zoom
 2) YouTube
 3) Salir
 ```
 
-### Zoom
+Después de seleccionar una fuente, el programa solicita la URL y un nombre para la transcripción.
+
+## Zoom
 
 Pega una URL de grabación:
 
@@ -43,15 +49,15 @@ https://institucion.zoom.us/rec/play/...
 El programa:
 
 1. valida la URL;
-2. comprueba si es accesible sin autenticación;
+2. comprueba si puede acceder a la grabación;
 3. si requiere acceso institucional, busca una sesión válida en los navegadores configurados;
-4. prepara una copia local de cookies para no consultar la base del navegador repetidamente;
+4. prepara una copia local de las cookies necesarias;
 5. descarga el video;
-6. genera MP3;
-7. transcribe;
-8. guarda el trabajo completo.
+6. genera un MP3;
+7. crea un FLAC temporal para Whisper;
+8. transcribe y guarda los resultados.
 
-MediaTranscribe **no inicia sesión por el usuario ni evade controles de acceso**. Solo reutiliza sesiones locales que ya tengan permiso para acceder a la grabación.
+Transcribe **no inicia sesión por el usuario ni evade controles de acceso**. Solo reutiliza sesiones locales que ya tengan permiso para acceder al contenido.
 
 Las cookies exportadas se almacenan únicamente en:
 
@@ -61,17 +67,45 @@ private/zoom.cookies.txt
 
 `private/` está excluido de Git.
 
-### YouTube
+## YouTube
 
-Pega una URL de YouTube o YouTube Music.
+Acepta URLs de YouTube y YouTube Music.
 
 Para videos públicos se intenta trabajar sin cookies. Si el recurso requiere una sesión y el usuario ya dispone de acceso en un navegador compatible, se utiliza el mismo mecanismo local de sesión.
 
-La descarga limita el video a un máximo configurable, por defecto **720p**, porque la prioridad del proyecto es obtener audio y transcripción de forma eficiente.
+La descarga limita el video a una altura máxima configurable, por defecto **720p**, porque la prioridad del proyecto es obtener el audio y la transcripción de forma eficiente.
+
+## Instalación
+
+### Requisitos
+
+- Windows 10/11
+- Python 3.10+
+- `ffmpeg`
+- `ffprobe`
+- dependencias Python de `requirements.txt`
+- opcionalmente, una GPU NVIDIA compatible
+
+Clona el repositorio:
+
+```bat
+git clone https://github.com/JaimeArriagadaRosas/Transcribe.git
+cd Transcribe
+```
+
+Se recomienda utilizar un entorno virtual:
+
+```bat
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+`ffmpeg` y `ffprobe` deben estar disponibles en `PATH`.
+
+Las versiones de `faster-whisper` y PyAV están fijadas en `requirements.txt` para mantener una combinación compatible con la decodificación de audio en Python 3.12.
 
 ## Ejecución
-
-### Desde CMD
 
 Desde la raíz del proyecto:
 
@@ -79,23 +113,21 @@ Desde la raíz del proyecto:
 python -m app.main
 ```
 
-Si existe `.venv`, también puedes ejecutar:
+Si estás utilizando el entorno virtual:
 
 ```bat
 .venv\Scripts\python.exe -m app.main
 ```
 
-### PowerShell
-
-El lanzador PowerShell está ordenado dentro de `tools/`:
+También existe un lanzador PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\run.ps1
 ```
 
-Ya no existe `run.bat`. El menú pertenece a la aplicación Python, no al lanzador.
+El menú pertenece a la aplicación Python; no existe un `run.bat`.
 
-## Estructura
+## Estructura principal
 
 ```text
 app/
@@ -122,9 +154,9 @@ logs/
 private/
 ```
 
-Los directorios de salida se crean automáticamente y no se versionan.
+Los directorios generados en tiempo de ejecución se crean automáticamente y no se versionan.
 
-## Trabajos numerados
+## Trabajos y resultados
 
 Cada nueva URL obtiene un número consecutivo:
 
@@ -135,7 +167,7 @@ output/
 └── 003_zoom_reunion-proyecto/
 ```
 
-Cada trabajo contiene:
+Cada trabajo puede contener:
 
 ```text
 video.mp4
@@ -146,7 +178,7 @@ audio.mp3
 metadata.json
 ```
 
-Después de pegar la URL, MediaTranscribe solicita un nombre para la transcripción. Ese nombre se usa como base para los tres archivos de salida; los caracteres no válidos para nombres de archivo se reemplazan automáticamente.
+El nombre solicitado al iniciar el trabajo se utiliza como base para los archivos de transcripción. Los caracteres no válidos para nombres de archivo se reemplazan automáticamente.
 
 El archivo global:
 
@@ -154,9 +186,9 @@ El archivo global:
 data/jobs.json
 ```
 
-mantiene la numeración y permite detectar URLs ya procesadas o reanudar trabajos incompletos.
+mantiene la numeración, permite detectar URLs ya procesadas y reanudar trabajos incompletos.
 
-Si una URL ya fue completada, MediaTranscribe no vuelve a descargarla automáticamente. Si quedó interrumpida o fallida, la siguiente ejecución reanuda el mismo trabajo.
+Si una URL ya fue completada, Transcribe no vuelve a descargarla automáticamente. Si quedó interrumpida o fallida, la siguiente ejecución reutiliza el mismo trabajo.
 
 ## Transcripción
 
@@ -169,7 +201,7 @@ Configuración predeterminada:
 - batch inicial: 4;
 - fallback: CPU `int8`.
 
-El programa conserva el MP3 y utiliza FLAC mono 16 kHz únicamente como entrada temporal de Whisper.
+El programa conserva el MP3 y utiliza FLAC mono a 16 kHz únicamente como entrada temporal de Whisper.
 
 ## Configuración
 
@@ -194,27 +226,8 @@ Para forzar español:
 "language": "es"
 ```
 
-## Requisitos
-
-- Windows 10/11
-- Python 3.10+
-- `yt-dlp`
-- `ffmpeg`
-- `ffprobe`
-- `faster-whisper`
-- CTranslate2
-- opcionalmente una GPU NVIDIA compatible
-
-Instala las dependencias Python con:
-
-```bat
-python -m pip install -r requirements.txt
-```
-
-FFmpeg/ffprobe deben estar disponibles en `PATH`.
-
 ## Privacidad
 
-MediaTranscribe no debe almacenar contraseñas.
+Transcribe no almacena contraseñas.
 
 Los datos sensibles de sesión quedan bajo `private/`, que está ignorado por Git. Los videos, MP3, transcripciones, logs y metadata de trabajos también quedan fuera del repositorio.
