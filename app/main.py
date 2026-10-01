@@ -41,7 +41,7 @@ def _process(provider: str) -> None:
 def menu() -> int:
     while True:
         print("\n========================================")
-        print("            MEDIATRANSCRIBE")
+        print("               TRANSCRIBE")
         print("========================================")
         print("1) Zoom")
         print("2) YouTube")
