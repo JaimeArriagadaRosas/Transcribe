@@ -36,4 +36,5 @@ class YouTubeProvider:
             session.yt_dlp_args,
             int(config.get("max_video_height", 720)),
             logger,
+            require_js_runtime=True,
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,16 @@ _MEDIA_EXTENSIONS = {".mp4", ".mkv", ".webm", ".mov", ".m4v"}
 
 def _command(*args: str) -> list[str]:
     return [sys.executable, "-m", "yt_dlp", *args]
+
+
+def _js_runtime_args() -> list[str]:
+    for runtime in ("deno", "node"):
+        if shutil.which(runtime):
+            return ["--js-runtimes", runtime]
+    raise RuntimeError(
+        "YouTube requiere un runtime JavaScript compatible para yt-dlp. "
+        "Instala Deno 2.3+ o Node.js 22+ y asegúrate de que esté disponible en PATH."
+    )
 
 
 def _existing_video(job_dir: Path) -> Path | None:
@@ -40,6 +51,7 @@ def download_video(
     max_height: int,
     logger,
     runner: Callable = subprocess.run,
+    require_js_runtime: bool = False,
 ) -> DownloadedMedia:
     existing = _existing_video(job_dir)
     if existing:
@@ -54,6 +66,10 @@ def download_video(
     job_dir.mkdir(parents=True, exist_ok=True)
     template = job_dir / "source.%(ext)s"
     selector = f"bestvideo[height<={int(max_height)}]+bestaudio/best[height<={int(max_height)}]/best"
+    js_runtime_args = _js_runtime_args() if require_js_runtime else []
+    if js_runtime_args:
+        logger.info("yt-dlp: runtime JavaScript %s", js_runtime_args[-1])
+
     command = _command(
         "--continue",
         "--no-playlist",
@@ -68,6 +84,7 @@ def download_video(
         str(template),
         "--print",
         "after_move:filepath",
+        *js_runtime_args,
         *auth_args,
         url,
     )

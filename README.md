@@ -83,7 +83,8 @@ La descarga limita el video a una altura máxima configurable, por defecto **720
 - Python 3.10+
 - `ffmpeg`
 - `ffprobe`
-- dependencias Python de `requirements.txt`
+- para YouTube: Deno 2.3+ o Node.js 22+ disponible en `PATH`
+- dependencias Python de `requirements.txt` (incluye los componentes EJS de `yt-dlp`)
 - opcionalmente, una GPU NVIDIA compatible
 
 Clona el repositorio:
@@ -102,6 +103,8 @@ python -m venv .venv
 ```
 
 `ffmpeg` y `ffprobe` deben estar disponibles en `PATH`.
+
+Para YouTube, Transcribe detecta automáticamente primero `deno` y luego `node`. Si no encuentra ninguno, detiene la descarga con un mensaje claro antes de invocar `yt-dlp`. Las instalaciones desde `requirements.txt` usan los extras predeterminados de `yt-dlp`, incluyendo `yt-dlp-ejs`, necesarios para los desafíos JavaScript actuales de YouTube.
 
 Las versiones de `faster-whisper` y PyAV están fijadas en `requirements.txt` para mantener una combinación compatible con la decodificación de audio en Python 3.12.
 
