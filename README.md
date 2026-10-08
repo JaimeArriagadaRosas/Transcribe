@@ -71,7 +71,7 @@ private/zoom.cookies.txt
 
 Acepta URLs de YouTube y YouTube Music.
 
-Para videos públicos se intenta trabajar sin cookies. Si el recurso requiere una sesión y el usuario ya dispone de acceso en un navegador compatible, se utiliza el mismo mecanismo local de sesión.
+Los videos públicos se comprueban primero sin cookies. Solo si YouTube indica que hace falta autenticación se intenta reutilizar una sesión de navegador. Si el recurso requiere una sesión y el usuario ya dispone de acceso en un navegador compatible, se utiliza el mismo mecanismo local de sesión.
 
 La descarga limita el video a una altura máxima configurable, por defecto **720p**, porque la prioridad del proyecto es obtener el audio y la transcripción de forma eficiente.
 
@@ -109,6 +109,18 @@ Para YouTube, Transcribe detecta automáticamente primero `deno` y luego `node`.
 Las versiones de `faster-whisper` y PyAV están fijadas en `requirements.txt` para mantener una combinación compatible con la decodificación de audio en Python 3.12.
 
 ## Ejecución
+
+**En Windows, utiliza preferentemente el lanzador del proyecto:**
+
+```bat
+cd /d D:\\Descargas\\Transcribe
+transcribe.cmd
+```
+
+El lanzador usa siempre `.venv\\Scripts\\python.exe` y explica cómo instalar las dependencias si falta el entorno virtual. No es necesario activar manualmente el entorno. `python -m app.main` sin activar `.venv` puede utilizar otro Python sin `yt-dlp` instalado.
+
+Para arrancar desde cualquier carpeta, añade el directorio de Transcribe al `PATH` y ejecuta `transcribe.cmd`; el nombre corto `Transcribe` funciona cuando Windows resuelve el archivo `transcribe.cmd` a través del PATH.
+
 
 Desde la raíz del proyecto:
 

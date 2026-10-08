@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from app.core.pipeline import process_url
+from app.core.diagnostics import check_environment
 
 
 def _root() -> Path:
@@ -39,6 +40,11 @@ def _process(provider: str) -> None:
 
 
 def menu() -> int:
+    warnings = check_environment(_root())
+    if warnings:
+        print("\nComprobación del entorno:")
+        for warning in warnings:
+            print(f"[AVISO] {warning}")
     while True:
         print("\n========================================")
         print("               TRANSCRIBE")
