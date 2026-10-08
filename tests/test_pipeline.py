@@ -233,43 +233,45 @@ class PipelineTests(unittest.TestCase):
 
 
 class PipelineLauncherTests(unittest.TestCase):
+    """Smoke-test current interactive launchers without downloading media."""
+
     def setUp(self):
         self.root = Path(__file__).resolve().parents[1]
 
-    def test_powershell_forwards_help_and_exit_code(self):
-        completed = subprocess.run(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(self.root / "run.ps1"), "--help"],
-            cwd=self.root,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
+    def _check_menu(self, completed):
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("DownloadOnly", completed.stdout)
-        self.assertIn("máximo", completed.stdout)
+        self.assertIn("TRANSCRIBE", completed.stdout)
+        self.assertIn("1) Zoom", completed.stdout)
+        self.assertIn("2) YouTube", completed.stdout)
 
-    def test_batch_forwards_help_and_exit_code(self):
+    @unittest.skipUnless(sys.platform == "win32", "Windows launcher test")
+    def test_powershell_starts_and_exits_menu(self):
         completed = subprocess.run(
-            ["cmd", "/c", str(self.root / "run.bat"), "--help"],
-            cwd=self.root,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-File", str(self.root / "tools" / "run.ps1")],
+            cwd=self.root, input="3\n", capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=30,
         )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("TranscribeOnly", completed.stdout)
-        self.assertIn("máximo", completed.stdout)
+        self._check_menu(completed)
 
-    def test_direct_preboot_output_is_utf8(self):
+    @unittest.skipUnless(sys.platform == "win32", "Windows launcher test")
+    def test_batch_starts_and_exits_menu(self):
         completed = subprocess.run(
-            [sys.executable, "-m", "scripts.check_dependencies"],
-            cwd=self.root,
-            capture_output=True,
+            ["cmd", "/c", str(self.root / "transcribe.cmd")],
+            cwd=self.root, input="3\n", capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=30,
         )
-        output = completed.stdout.decode("utf-8")
-        self.assertIn("URLs encontradas", output)
+        self._check_menu(completed)
+
+    def test_environment_check_reports_missing_tools(self):
+        from unittest.mock import patch
+        from app.core.diagnostics import check_environment
+
+        with patch("app.core.diagnostics.importlib.util.find_spec", return_value=None), \
+             patch("app.core.diagnostics.shutil.which", return_value=None):
+            warnings = check_environment(self.root)
+        self.assertTrue(any("yt_dlp" in warning for warning in warnings))
+        self.assertTrue(any("ffmpeg" in warning for warning in warnings))
 
 
 if __name__ == "__main__":
