@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import urlparse
 
-from app.core.browser import prepare_browser_session
+from app.core.youtube_access import prepare_youtube_access
 from app.providers.base import DownloadedMedia
 from app.providers.ytdlp import download_video
 
@@ -27,7 +27,7 @@ class YouTubeProvider:
     def download(self, root: Path, job_dir: Path, url: str, config: dict, logger) -> DownloadedMedia:
         self.validate_url(url)
         print("[1/5] Comprobando acceso a YouTube...")
-        session = prepare_browser_session(root, url, self.name, config, logger)
+        session = prepare_youtube_access(root, url, config, logger)
         print(f"      Acceso: {session.source}")
         print("[2/5] Descargando video...")
         return download_video(
