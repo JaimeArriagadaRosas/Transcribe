@@ -243,13 +243,15 @@ class PipelineLauncherTests(unittest.TestCase):
         self.assertIn("TRANSCRIBE", completed.stdout)
         self.assertIn("1) Zoom", completed.stdout)
         self.assertIn("2) YouTube", completed.stdout)
+        self.assertIn("3) TikTok", completed.stdout)
+        self.assertIn("4) Instagram", completed.stdout)
 
     @unittest.skipUnless(sys.platform == "win32", "Windows launcher test")
     def test_powershell_starts_and_exits_menu(self):
         completed = subprocess.run(
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
              "-File", str(self.root / "tools" / "run.ps1")],
-            cwd=self.root, input="3\n", capture_output=True, text=True,
+            cwd=self.root, input="5\n", capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=30,
         )
         self._check_menu(completed)
@@ -258,7 +260,7 @@ class PipelineLauncherTests(unittest.TestCase):
     def test_batch_starts_and_exits_menu(self):
         completed = subprocess.run(
             ["cmd", "/c", str(self.root / "transcribe.cmd")],
-            cwd=self.root, input="3\n", capture_output=True, text=True,
+            cwd=self.root, input="5\n", capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=30,
         )
         self._check_menu(completed)
