@@ -52,7 +52,7 @@ def prepare_social_access(
 
     try:
         return prepare_browser_session(
-            root, url, provider, config, logger, cookie_domains=(f"{provider}.com",)
+            root, url, provider, config, logger
         )
     except AuthenticationError as exc:
         raise AuthenticationError(
