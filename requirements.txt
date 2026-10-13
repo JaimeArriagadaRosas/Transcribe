@@ -1,4 +1,6 @@
 yt-dlp[default]>=2025.1.26
+# TikTok currently requires browser TLS impersonation for challenge handling.
+curl_cffi>=0.13
 # Tested pair on Python 3.12: faster-whisper passes metadata_errors to av.open.
 # PyAV 19 removed that argument; keep the compatible decoder pinned.
 faster-whisper==1.2.1
