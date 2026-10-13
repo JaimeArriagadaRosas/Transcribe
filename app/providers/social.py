@@ -29,7 +29,8 @@ def normalize_social_url(url: str) -> str:
 
 def prepare_social_access(
     root: Path, url: str, provider: str, config: dict, logger,
-    extractor_args: tuple[str, ...] = (),\n) -> BrowserSession:
+    extractor_args: tuple[str, ...] = (),
+) -> BrowserSession:
     """Try public extraction first; use an authorized browser only for access errors."""
     ok, detail = _probe(url, list(extractor_args), __import__("subprocess").run)
     if ok:
