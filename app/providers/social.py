@@ -28,10 +28,10 @@ def normalize_social_url(url: str) -> str:
 
 
 def prepare_social_access(
-    root: Path, url: str, provider: str, config: dict, logger
-) -> BrowserSession:
+    root: Path, url: str, provider: str, config: dict, logger,
+    extractor_args: tuple[str, ...] = (),\n) -> BrowserSession:
     """Try public extraction first; use an authorized browser only for access errors."""
-    ok, detail = _probe(url, [], __import__("subprocess").run)
+    ok, detail = _probe(url, list(extractor_args), __import__("subprocess").run)
     if ok:
         logger.info("%s: acceso público disponible", provider)
         return BrowserSession("anonymous", "public")
@@ -52,7 +52,7 @@ def prepare_social_access(
 
     try:
         return prepare_browser_session(
-            root, url, provider, config, logger
+            root, url, provider, config, logger, extractor_args=extractor_args
         )
     except AuthenticationError as exc:
         raise AuthenticationError(
