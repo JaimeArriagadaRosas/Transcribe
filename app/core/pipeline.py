@@ -8,6 +8,9 @@ from pathlib import Path
 from app.core.audio import ensure_flac, ensure_mp3
 from app.core.jobs import Job, JobStore
 from app.core.transcribe import transcribe_audio
+from app.providers.base import DownloadedMedia, DownloadedMediaBatch
+from app.providers.instagram import InstagramProvider
+from app.providers.tiktok import TikTokProvider
 from app.providers.youtube import YouTubeProvider
 from app.providers.zoom import ZoomProvider
 
@@ -15,6 +18,8 @@ from app.providers.zoom import ZoomProvider
 PROVIDERS = {
     "zoom": ZoomProvider(),
     "youtube": YouTubeProvider(),
+    "tiktok": TikTokProvider(),
+    "instagram": InstagramProvider(),
 }
 
 
@@ -67,53 +72,65 @@ def process_url(root: Path, provider_name: str, url: str, transcription_name: st
         job.metadata["error"] = None
         store.save(job)
 
-        media = provider.download(root, job.directory, url, config, logger)
-        job.metadata["title"] = media.title
+        downloaded = provider.download(root, job.directory, url, config, logger)
+        is_batch = isinstance(downloaded, DownloadedMediaBatch)
+        items = downloaded.items if is_batch else [downloaded]
+        if not items:
+            raise RuntimeError("La fuente no entregó videos para transcribir")
+        media = items[0]
+        job.metadata["title"] = downloaded.title
         job.metadata["duration"] = media.duration
         job.metadata["source_id"] = media.source_id
         job.metadata["files"]["video"] = _relative(job, media.video_path)
         job.metadata["status"] = "downloaded"
-        job = store.finalize_directory_name(job, media.title)
+        job = store.finalize_directory_name(job, downloaded.title)
         store.save(job)
 
-        video = job.directory / str(job.metadata["files"]["video"])
-        if not video.exists():
-            matches = list(job.directory.glob("video.*"))
-            if not matches:
-                raise RuntimeError("No se encontró el video descargado después de renombrar el trabajo")
-            video = matches[0]
-            job.metadata["files"]["video"] = _relative(job, video)
-
-        print("[3/5] Generando MP3...")
-        mp3 = ensure_mp3(video, job.directory / "audio.mp3")
-        job.metadata["files"]["audio"] = _relative(job, mp3)
-        job.metadata["status"] = "audio_ready"
-        store.save(job)
-
-        print("[4/5] Transcribiendo...")
         temp_dir = root / "temp" / f"{job.number:03d}"
-        flac = ensure_flac(video, temp_dir / "audio.flac")
-        result = transcribe_audio(flac, job.directory, config, logger, transcription_name)
-        for kind in ("txt", "srt", "vtt"):
-            job.metadata["files"][kind] = _relative(job, result[kind])
-        job.metadata["transcription"] = {
-            "name": result["name"],
-            "model": result["model"],
-            "language": result["language"],
-            "device": result["device"],
-            "compute_type": result["compute_type"],
-        }
+        completed_items = []
+        for i, item in enumerate(items, start=1):
+            video = job.directory / item.video_path.name
+            if not video.is_file() or not video.stat().st_size:
+                raise RuntimeError(f"No se encontró el video {i} después de renombrar el trabajo")
+            suffix = f"_{i:02d}" if is_batch and len(items) > 1 else ""
+            name = f"{transcription_name}{suffix}"
+            mp3 = job.directory / (f"audio{suffix}.mp3")
+            flac = temp_dir / (f"audio{suffix}.flac")
+            print(f"[3/5] Generando MP3{suffix}...")
+            mp3 = ensure_mp3(video, mp3)
+            if i == 1:
+                job.metadata["files"]["audio"] = _relative(job, mp3)
+            job.metadata["status"] = "audio_ready"
+            store.save(job)
+
+            print(f"[4/5] Transcribiendo{suffix}...")
+            flac = ensure_flac(video, flac)
+            result = transcribe_audio(flac, job.directory, config, logger, name)
+            output_files = {kind: _relative(job, result[kind]) for kind in ("txt", "srt", "vtt")}
+            if i == 1:
+                job.metadata["files"].update(output_files)
+            completed_items.append({
+                "source_id": item.source_id, "video": _relative(job, video),
+                "audio": _relative(job, mp3), **output_files,
+            })
+            job.metadata["items"] = completed_items
+            job.metadata["transcription"] = {
+                "name": result["name"], "model": result["model"],
+                "language": result["language"], "device": result["device"],
+                "compute_type": result["compute_type"],
+            }
+            store.save(job)
+            if bool(config.get("delete_temporary_audio", True)):
+                flac.unlink(missing_ok=True)
+
         job.metadata["status"] = "completed"
         job.metadata["error"] = None
         store.save(job)
-
         if bool(config.get("delete_temporary_audio", True)):
-            flac.unlink(missing_ok=True)
             try:
                 temp_dir.rmdir()
             except OSError:
                 pass
-
         print("[5/5] Guardando resultados...")
         print(f"✓ Trabajo #{job.number:03d} completado")
         print(f"  {job.directory.relative_to(root)}")
