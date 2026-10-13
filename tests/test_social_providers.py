@@ -13,6 +13,7 @@ class SocialProviderTests(unittest.TestCase):
         provider = TikTokProvider()
         for url in (
             "https://www.tiktok.com/@account/video/1234567890123456789",
+            "https://www.tiktok.com/@torres.torresociel/video/7641375408507735316",
             "https://vm.tiktok.com/ZXexample/",
             "https://vt.tiktok.com/ZXexample/",
             "https://www.tiktok.com/t/ZXexample/",
@@ -30,6 +31,7 @@ class SocialProviderTests(unittest.TestCase):
         for url in (
             "https://www.instagram.com/reel/C0example/",
             "https://www.instagram.com/p/C0example/?igsh=abc",
+            "https://www.instagram.com/p/DeYZ4M-xrZR/",
             "https://www.instagram.com/tv/C0example/",
             "https://www.instagram.com/stories/account/1234567/",
         ):
