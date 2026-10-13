@@ -4,6 +4,8 @@ Transcribe es una aplicación local para **descargar y transcribir contenido al 
 
 - **Zoom:** grabaciones públicas o institucionales, reutilizando sesiones locales autorizadas cuando la grabación requiere autenticación.
 - **YouTube:** videos públicos y, cuando sea necesario, acceso mediante una sesión local autorizada.
+- **TikTok:** videos públicos y enlaces compartidos, con sesión autorizada cuando corresponda.
+- **Instagram:** Reels, publicaciones y videos de historias accesibles; admite varios videos de una publicación.
 - **Transcripción local:** genera archivos TXT, SRT y VTT con `faster-whisper`.
 - **Reanudación:** conserva el estado de los trabajos para evitar repetir descargas o continuar procesos interrumpidos.
 
@@ -33,7 +35,9 @@ TXT + SRT + VTT
 ========================================
 1) Zoom
 2) YouTube
-3) Salir
+3) TikTok
+4) Instagram
+5) Salir
 ```
 
 Después de seleccionar una fuente, el programa solicita la URL y un nombre para la transcripción.
@@ -74,6 +78,10 @@ Acepta URLs de YouTube y YouTube Music.
 Los videos públicos se comprueban primero sin cookies. Solo si YouTube indica que hace falta autenticación se intenta reutilizar una sesión de navegador. Si el recurso requiere una sesión y el usuario ya dispone de acceso en un navegador compatible, se utiliza el mismo mecanismo local de sesión.
 
 La descarga limita el video a una altura máxima configurable, por defecto **720p**, porque la prioridad del proyecto es obtener el audio y la transcripción de forma eficiente.
+
+## TikTok e Instagram
+
+Cada plataforma tiene un proveedor independiente y comparte el motor local de transcripción. Consulta [flujos, compatibilidad y pruebas](docs/SOCIAL_PROVIDERS.md).
 
 ## Instalación
 

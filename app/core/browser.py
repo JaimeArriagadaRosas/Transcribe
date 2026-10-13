@@ -98,6 +98,7 @@ def prepare_browser_session(
     config: dict,
     logger,
     runner: Callable = subprocess.run,
+    extractor_args: tuple[str, ...] = (),
 ) -> BrowserSession:
     """Resolve access once and cache only a local Netscape cookie export.
 
@@ -109,11 +110,11 @@ def prepare_browser_session(
     cookie_file = private_dir / f"{provider}.cookies.txt"
 
     if _valid_cookie_file(cookie_file):
-        ok, _ = _probe(url, ["--cookies", str(cookie_file)], runner)
+        ok, _ = _probe(url, [*extractor_args, "--cookies", str(cookie_file)], runner)
         if ok:
             return BrowserSession("cookies_file", "cached", cookie_file)
 
-    ok, anonymous_detail = _probe(url, [], runner)
+    ok, anonymous_detail = _probe(url, list(extractor_args), runner)
     if ok:
         return BrowserSession("anonymous", "public")
 
@@ -123,7 +124,7 @@ def prepare_browser_session(
         temporary = private_dir / f".{provider}.{uuid.uuid4().hex}.cookies.tmp"
         temporary.unlink(missing_ok=True)
         args = ["--cookies-from-browser", browser, "--cookies", str(temporary)]
-        ok, detail = _probe(url, args, runner)
+        ok, detail = _probe(url, [*extractor_args, *args], runner)
         if ok and _valid_cookie_file(temporary):
             os.replace(temporary, cookie_file)
             logger.info("Sesión %s preparada desde %s", provider, browser)

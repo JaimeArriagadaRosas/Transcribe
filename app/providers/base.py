@@ -13,9 +13,15 @@ class DownloadedMedia:
     source_id: str | None = None
 
 
+@dataclass
+class DownloadedMediaBatch:
+    title: str
+    items: list[DownloadedMedia]
+
+
 class Provider(Protocol):
     name: str
 
     def validate_url(self, url: str) -> None: ...
 
-    def download(self, root: Path, job_dir: Path, url: str, config: dict, logger) -> DownloadedMedia: ...
+    def download(self, root: Path, job_dir: Path, url: str, config: dict, logger) -> DownloadedMedia | DownloadedMediaBatch: ...
