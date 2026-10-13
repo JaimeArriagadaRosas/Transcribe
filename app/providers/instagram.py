@@ -40,7 +40,7 @@ class InstagramProvider:
         selector = f"bestvideo[height<={int(config.get('max_video_height', 720))}]+bestaudio/best[height<={int(config.get('max_video_height', 720))}]/best"
         command = [
             sys.executable, "-m", "yt_dlp", "--ignore-config",
-            "--continue", "--no-overwrites", "--yes-playlist",
+            "--continue", "--no-overwrites", "--yes-playlist", "--ignore-errors",
             "--windows-filenames", "--no-progress",
             "--write-info-json", "--merge-output-format", "mp4",
             "-f", selector, "-o", str(template),
