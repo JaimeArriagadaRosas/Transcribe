@@ -27,8 +27,7 @@ def _read_transcription_name() -> str:
 
 
 def _process(provider: str) -> None:
-    title = "ZOOM" if provider == "zoom" else "YOUTUBE"
-    print(f"\n---------------- {title} ----------------")
+    print(f"\n---------------- {provider.upper()} ----------------")
     url = _read_url("Pega la URL: ")
     transcription_name = _read_transcription_name()
     try:
@@ -45,19 +44,20 @@ def menu() -> int:
         print("\nComprobación del entorno:")
         for warning in warnings:
             print(f"[AVISO] {warning}")
+    options = {"1": "zoom", "2": "youtube", "3": "tiktok", "4": "instagram"}
     while True:
         print("\n========================================")
         print("               TRANSCRIBE")
         print("========================================")
         print("1) Zoom")
         print("2) YouTube")
-        print("3) Salir")
-        choice = input("\nSelecciona una opción (1-3): ").strip()
-        if choice == "1":
-            _process("zoom")
-        elif choice == "2":
-            _process("youtube")
-        elif choice == "3":
+        print("3) TikTok")
+        print("4) Instagram")
+        print("5) Salir")
+        choice = input("\nSelecciona una opción (1-5): ").strip()
+        if choice in options:
+            _process(options[choice])
+        elif choice == "5":
             return 0
         else:
             print("Opción inválida.")
