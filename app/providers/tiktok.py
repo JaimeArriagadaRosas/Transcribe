@@ -29,10 +29,10 @@ class TikTokProvider:
     def download(self, root: Path, job_dir: Path, url: str, config: dict, logger) -> DownloadedMedia:
         self.validate_url(url)
         print("[1/5] Comprobando acceso a TikTok...")
-        session = prepare_social_access(root, url, self.name, config, logger)
+        session = prepare_social_access(root, url, self.name, config, logger, extractor_args=("--impersonate", "chrome"))
         print(f"      Acceso: {session.source}")
         print("[2/5] Descargando video de TikTok...")
         return download_video(
-            job_dir, url, session.yt_dlp_args,
+            job_dir, url, [*session.yt_dlp_args, "--impersonate", "chrome"],
             int(config.get("max_video_height", 720)), logger,
         )
